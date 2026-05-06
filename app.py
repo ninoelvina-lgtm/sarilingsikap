@@ -441,8 +441,6 @@ def logout():
     session.clear()
     return redirect(url_for('index'))
 
-# No need for POSApp() since you defined app at the top on line 5
-
 if __name__ == "__main__":
     log_activity('system', 'System Start', 'System')
     app.run(debug=True)
