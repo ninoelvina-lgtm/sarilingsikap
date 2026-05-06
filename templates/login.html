@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HomeTech Login</title>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #0072ff;
+            --secondary: #00c6ff;
+            --dark: #0f172a;
+            --glass-bg: rgba(255, 255, 255, 0.07);
+            --glass-border: rgba(255, 255, 255, 0.15);
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Outfit', sans-serif;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            /* BACKGROUND PATH FIXED */
+            background: url("{{ url_for('static', filename='background.jpg') }}") no-repeat center;
+            background-size: cover;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* MODERN GLASS OVERLAY */
+        body::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at center, rgba(15, 23, 42, 0.4), rgba(15, 23, 42, 0.8));
+            backdrop-filter: blur(12px); /* Deep blur for glass effect */
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* LOGIN CARD (GLASSMORPHISM) */
+        .login-box {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            padding: 50px 40px;
+            border-radius: 40px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(25px) saturate(180%);
+            -webkit-backdrop-filter: blur(25px) saturate(180%);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            color: white;
+            z-index: 2;
+            animation: fadeInScale 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes fadeInScale {
+            from { opacity: 0; transform: scale(0.95) translateY(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        /* LOGO STYLING */
+        .logo-container {
+            width: 95px;
+            height: 95px;
+            margin: 0 auto 25px auto;
+            background: Black;
+            border-radius: 28px;
+            padding: 18px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: 0.4s ease;
+        }
+
+        .logo-container:hover {
+            transform: translateY(-5px) rotate(-3deg);
+        }
+
+        .logo-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        h2 {
+            font-weight: 800;
+            font-size: 32px;
+            margin: 0;
+            letter-spacing: -1px;
+            background: linear-gradient(to bottom, #ffffff, #cbd5e1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            color: var(--secondary);
+            font-weight: 700;
+            margin-bottom: 35px;
+            display: block;
+        }
+
+        /* INPUT GROUPS */
+        .input-group {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .input-group i {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 16px;
+            transition: 0.3s;
+        }
+
+        .left-icon { left: 20px; }
+        .right-icon { 
+            right: 20px; 
+            cursor: pointer; 
+        }
+        .right-icon:hover { color: var(--secondary); }
+
+        input {
+            width: 100%;
+            padding: 16px 50px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 18px;
+            color: white;
+            font-size: 15px;
+            font-family: inherit;
+            transition: 0.3s;
+            box-sizing: border-box;
+        }
+
+        input::placeholder { color: rgba(255, 255, 255, 0.4); }
+
+        input:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.12);
+            border-color: var(--secondary);
+            box-shadow: 0 0 20px rgba(0, 198, 255, 0.15);
+        }
+
+        /* NEAT BUTTON */
+        button {
+            width: 100%;
+            padding: 16px;
+            margin-top: 10px;
+            border: none;
+            border-radius: 18px;
+            background: linear-gradient(135deg, var(--secondary), var(--primary));
+            color: white;
+            font-size: 16px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: 0.4s;
+            box-shadow: 0 10px 25px rgba(0, 114, 255, 0.2);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 35px rgba(0, 114, 255, 0.4);
+            filter: brightness(1.1);
+        }
+
+        /* ERROR MESSAGE */
+        .error {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+            padding: 12px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .footer {
+            margin-top: 35px;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.4);
+            letter-spacing: 0.5px;
+        }
+
+        .footer b { color: rgba(255, 255, 255, 0.7); }
+    </style>
+</head>
+
+<body>
+
+    <div class="login-box">
+        <div class="logo-container">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="HomeTech Logo">
+        </div>
+
+        <h2>HOMETECH</h2>
+        <span class="subtitle">Solutions</span>
+
+        {% if error %}
+        <div class="error">
+            <i class="fas fa-circle-exclamation"></i> {{ error }}
+        </div>
+        {% endif %}
+
+        <form method="post" action="/login">
+            <div class="input-group">
+                <i class="fa fa-user left-icon"></i>
+                <input type="text" name="username" placeholder="Username" required autocomplete="off">
+            </div>
+
+            <div class="input-group">
+                <i class="fa fa-lock left-icon"></i>
+                <input type="password" id="password" name="password" placeholder="Password" required>
+            </div>
+
+            <button type="submit">Sign In</button>
+        </form>
+
+        <div style="margin-top: 20px; font-size: 13px; color: rgba(255, 255, 255, 0.6);">
+            Forgot password? <a href="#" style="color: var(--secondary); text-decoration: none; font-weight: 500;">Reset here</a>
+        </div>
+
+        <div class="footer">
+            2026 HomeTech Solutions. All rights reserved.
+        </div>
+    </div>
+
+    <script>
+        function togglePassword() {
+            const passField = document.getElementById("password");
+            const icon = document.getElementById("toggleIcon");
+
+            if (passField.type === "password") {
+                passField.type = "text";
+                icon.classList.replace("fa-eye", "fa-eye-slash");
+            } else {
+                passField.type = "password";
+                icon.classList.replace("fa-eye-slash", "fa-eye");
+            }
+        }
+    </script>
+
+</body>
+</html>

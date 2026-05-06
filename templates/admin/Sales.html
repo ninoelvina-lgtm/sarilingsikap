@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Management</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <style>
+        body { margin: 0; padding: 0px; font-family: Arial, sans-serif; background: #f0f2f5; }
+        .container { display: flex; min-height: 100vh; }
+
+        /* SIDEBAR */
+        .sidebar {
+
+            width: 260px;
+            background: #2c3e50;
+            color: white;
+            padding: 20px 15px;
+        }
+
+        .logo-title {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .logo-title i {
+            font-size: 28px;
+            display: block;
+            margin-bottom: 5px;
+            color: #ecf0f1;
+        }
+
+        .sidebar a {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            margin: 5px 0;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+
+        .sidebar a i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .sidebar a:hover {
+            background: #34495e;
+        }
+
+        .main-content { flex: 1; padding: 20px; }
+        .page-header { margin-bottom: 25px; padding-bottom: 10px; border-bottom: 1px solid #ddd; }
+        .action-bar { margin-bottom: 20px; }
+        .btn { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px; }
+        .btn-primary { background: #3498db; color: white; }
+        .btn-success { background: #2ecc71; color: white; }
+        .btn-danger { background: #e74c3c; color: white; }
+        .form-box { background: white; border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .form-row { display: flex; gap: 10px; margin-bottom: 10px; }
+        .form-row input { flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        .form-box h3 { margin-bottom: 15px; color: #2c3e50; font-size: 16px; font-weight: 600; }
+        .sales-table { background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); overflow-x: auto; }
+        .sales-table table { width: 100%; border-collapse: collapse; }
+        .sales-table th, .sales-table td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #ddd; }
+        .sales-table th { background: #f8f9fa; }
+        .sales-actions button { margin-right: 5px; }
+        .error-box { background: #f8d7da; color: #721c24; padding: 10px; border-radius: 4px; border: 1px solid #f5c6cb; margin-bottom: 15px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="sidebar">
+        <div class="logo-title">
+            <i class="fas fa-house"></i>
+            <span>HomeTech</span>
+        </div>
+
+        <a href="{% if session.get('role') == 'cashier' %}{{ url_for('cashier_dashboard') }}{% else %}{{ url_for('admin_dashboard') }}{% endif %}"><i class="fas fa-chart-line"></i> Dashboard</a>
+        <a href="{{ url_for('customer_management') }}"><i class="fas fa-users"></i> Customer</a>
+        <a href="{{ url_for('products_management') }}"><i class="fas fa-box"></i> Products</a>
+        <a href="{{ url_for('sales_management') }}" class="active"><i class="fas fa-shopping-cart"></i> Sales</a>
+        <a href="{{ url_for('billing_management') }}"><i class="fas fa-file-invoice-dollar"></i> Billing</a>
+        <a href="{{ url_for('payment') }}"><i class="fas fa-credit-card"></i> Payments</a>
+        <a href="{{ url_for('reports') }}"><i class="fas fa-chart-pie"></i> Reports</a>
+        <a href="{{ url_for('users') }}"><i class="fas fa-user-cog"></i> Users</a>
+        <a href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+    </div>
+
+    <div class="main-content">
+        <div class="page-header">
+            <h1>Sales Management</h1>
+            <p>Track recent sales, add invoices, and monitor revenue.</p>
+        </div>
+
+        {% if error %}
+            <div class="error-box">{{ error }}</div>
+        {% endif %}
+
+        <div class="form-box">
+    <h3>Add New Sale</h3>
+    <form method="POST" action="/sales" id="salesForm">
+
+        <!-- Row 1 -->
+        <div class="form-row">
+            <input type="text" name="product" id="product" placeholder="Product Name" required list="productList">
+            <datalist id="productList">
+                {% for product in products %}
+                    <option value="{{ product.name }}" data-price="{{ product.price }}">
+                {% endfor %}
+            </datalist>
+
+            <input type="text" name="customer" id="customer" placeholder="Customer Name" required>
+        </div>
+
+        <!-- Row 2 -->
+        <div class="form-row">
+            <input type="date" name="date" id="date" required>
+            <input type="number" name="quantity" id="quantity" min="1" placeholder="Quantity" required>
+            <input type="number" name="total" id="total" placeholder="Total Amount" readonly>
+        </div>
+
+        <!-- Row 3 (Payment Type) -->
+        <div class="form-row">
+            <select name="payment_type" id="payment_type" required onchange="handlePaymentTypeChange()">
+                <option value="">Select Payment Type</option>
+                <option value="cash">Cash</option>
+                <option value="installment">Installment</option>
+            </select>
+        </div>
+
+        <!-- Installment Fields -->
+        <div id="installment_fields" style="display:none;">
+            <div class="form-row">
+                <input type="number" name="down_payment" id="down_payment" min="0" step="0.01" placeholder="Down Payment">
+                <input type="number" name="installment_months" id="installment_months" min="1" max="36" value="12" placeholder="Months to Pay">
+                <input type="number" id="monthly_payment" placeholder="Monthly Payment" readonly>
+            </div>
+        </div>
+
+        <!-- Buttons -->
+        <div style="margin-top:10px;">
+            <button type="submit" name="add_sale" class="btn btn-success">Complete Sale</button>
+            <button type="button" onclick="clearSalesForm()" class="btn btn-danger">Clear</button>
+        </div>
+
+    </form>
+</div>
+
+        <div class="form-box" style="margin-bottom: 10px;">
+            <h3 style="margin: 0 0 15px 0; color: #2c3e50;">Search & Filter</h3>
+            <form method="POST" action="/sales" style="display: flex; gap: 10px; align-items: center;">
+                <input type="text" name="searchInput" id="searchInput" placeholder="Search by ID/Name" value="{{ search_query }}" style="flex: 1;">
+                <button type="submit" name="search_sale" class="btn btn-primary">Search</button>
+                <button type="button" onclick="clearSearchForm()" class="btn" style="background: #95a5a6; color: white;">Clear Search</button>
+            </form>
+        </div>
+
+        <div class="sales-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Product</th>
+                        <th>Customer</th>
+                        <th>Date</th>
+                        <th>Quantity</th>
+                        <th>Total</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% if sales %}
+                    {% for sale in sales %}
+                    <tr>
+                        <td>{{ sale.customer_id }}</td>
+                        <td>{{ sale.product }}</td>
+                        <td>{{ sale.customer }}</td>
+                        <td>{{ sale.date }}</td>
+                        <td>{{ sale.quantity }}</td>
+                        <td>₱{{ "%.2f" % sale.total }}</td>
+                        <td class="sales-actions">
+                            <a href="/delete_sale/{{ sale.customer_id }}"><button class="btn btn-danger" type="button">Delete</button></a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr><td colspan="7" style="text-align:center; padding:20px; color:#666;">No sales found.</td></tr>
+                {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Clear sales form
+    function clearSalesForm() {
+        document.getElementById('product').value = '';
+        document.getElementById('customer').value = '';
+        document.getElementById('date').value = '';
+        document.getElementById('quantity').value = '';
+        document.getElementById('total').value = '';
+        document.getElementById('payment_type').value = '';
+        document.getElementById('down_payment').value = '';
+        document.getElementById('installment_months').value = '12';
+        document.getElementById('monthly_payment').value = '';
+        document.getElementById('installment_fields').style.display = 'none';
+        document.getElementById('product').focus();
+    }
+
+    // Clear search form
+    function clearSearchForm() {
+        document.getElementById('searchInput').value = '';
+        // Redirect to show all sales
+        window.location.href = '/sales';
+    }
+
+    // Calculate total automatically when quantity changes
+    function calculateTotal() {
+        const productInput = document.getElementById('product');
+        const quantityInput = document.getElementById('quantity');
+        const totalInput = document.getElementById('total');
+        const paymentType = document.getElementById('payment_type').value;
+        const downPaymentInput = document.getElementById('down_payment');
+        const monthsInput = document.getElementById('installment_months');
+        const monthlyPaymentInput = document.getElementById('monthly_payment');
+
+        const productName = productInput.value.trim();
+        let price = 0;
+
+        // Find product price from datalist options
+        const options = document.querySelectorAll('#productList option');
+        for (let option of options) {
+            if (option.value === productName) {
+                price = parseFloat(option.getAttribute('data-price')) || 0;
+                break;
+            }
+        }
+
+        const quantity = parseInt(quantityInput.value) || 0;
+        const total = price * quantity;
+        totalInput.value = total.toFixed(2);
+
+        if (paymentType === 'installment') {
+            const downPayment = parseFloat(downPaymentInput.value) || 0;
+            const months = parseInt(monthsInput.value) || 12;
+            const remaining = total - downPayment;
+            const monthlyPayment = remaining > 0 && months > 0 ? remaining / months : 0;
+            monthlyPaymentInput.value = monthlyPayment.toFixed(2);
+        } else {
+            monthlyPaymentInput.value = '';
+        }
+    }
+
+    function handlePaymentTypeChange() {
+        const paymentType = document.getElementById('payment_type').value;
+        const installmentFields = document.getElementById('installment_fields');
+        const downPaymentInput = document.getElementById('down_payment');
+        const monthsInput = document.getElementById('installment_months');
+
+        if (paymentType === 'installment') {
+            installmentFields.style.display = 'block';
+            downPaymentInput.required = true;
+            monthsInput.required = true;
+            calculateTotal();
+        } else {
+            installmentFields.style.display = 'none';
+            downPaymentInput.required = false;
+            monthsInput.required = false;
+            downPaymentInput.value = '';
+            monthsInput.value = '12';
+            document.getElementById('monthly_payment').value = '';
+        }
+    }
+
+    // Add event listeners for auto-calculation
+    document.addEventListener('DOMContentLoaded', function() {
+        const quantityInput = document.getElementById('quantity');
+        const productInput = document.getElementById('product');
+        const paymentTypeSelect = document.getElementById('payment_type');
+        const downPaymentInput = document.getElementById('down_payment');
+        const monthsInput = document.getElementById('installment_months');
+
+        // Calculate total when quantity changes
+        quantityInput.addEventListener('input', calculateTotal);
+
+        // Calculate total when product changes
+        productInput.addEventListener('input', function() {
+            // Reset quantity and total when product changes
+            document.getElementById('quantity').value = '';
+            document.getElementById('total').value = '';
+            document.getElementById('monthly_payment').value = '';
+        });
+
+        paymentTypeSelect.addEventListener('change', handlePaymentTypeChange);
+        downPaymentInput.addEventListener('input', calculateTotal);
+        monthsInput.addEventListener('input', calculateTotal);
+
+        // Check if we just submitted and there's no error
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('success') === 'true') {
+            clearSalesForm();
+        }
+    });
+</script>
+</body>
+</html>
