@@ -441,12 +441,8 @@ def logout():
     session.clear()
     return redirect(url_for('index'))
 
-# Create the instance FIRST
-pos_app = POSApp() # type: ignore
+# No need for POSApp() since you defined app at the top on line 5
 
-# Now pull the Flask app out
-app = pos_app._POSApp__app 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     log_activity('system', 'System Start', 'System')
     app.run(debug=True)
